@@ -402,7 +402,7 @@
             "source": {
               "expression": [
                 "let",
-                "    Source = Csv.Document(File.Contents(\"C:\\Users\\nyamw\\Documents\\Projects\\Sales & Profit Data for Electrical Appliances\\Data\\archive\\Sales_Profit_Data_Electrical_Appliances.csv\"),[Delimiter=\",\", Columns=17, Encoding=65001, QuoteStyle=QuoteStyle.None]),",
+                "    Source = Csv.Document(File.Contents(\"C:\\Users\\nyamw\\Documents\\Projects\\Sales Growth (Ashish Babaria)\\Data\\Sales_Profit_Data_Electrical_Appliances.csv\"),[Delimiter=\",\", Columns=17, Encoding=65001, QuoteStyle=QuoteStyle.None]),",
                 "    #\"Promoted Headers\" = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),",
                 "    #\"Changed Type\" = Table.TransformColumnTypes(#\"Promoted Headers\",{{\"Order ID\", Int64.Type}, {\"Order Date\", type text}, {\"Unit Cost\", type number}, {\"Price\", type number}, {\"Order Qty\", Int64.Type}, {\"Cost of Sales\", type number}, {\"Sales\", type number}, {\"Profit\", type number}, {\"Channel\", type text}, {\"Promotion Name\", type text}, {\"Product Name\", type text}, {\"Manufacturer\", type text}, {\"Product Sub Category\", type text}, {\"Product Category\", type text}, {\"Region\", type text}, {\"City\", type text}, {\"Country\", type text}}),",
                 "    #\"Split Column by Delimiter\" = Table.SplitColumn(#\"Changed Type\", \"Order Date\", Splitter.SplitTextByDelimiter(\"/\", QuoteStyle.Csv), {\"Order Date.1\", \"Order Date.2\", \"Order Date.3\"}),",

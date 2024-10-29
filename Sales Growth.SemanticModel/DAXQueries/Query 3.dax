@@ -1,0 +1,190 @@
+DEFINE
+    MEASURE 'Measures_'[Sales till To date] = CALCULATE([Total Sales], 
+                                filter ('Dim_Date',max('Dim_Date'[Date])<= [Slicer Selection max])
+                                )
+    MEASURE 'Measures_'[Max Date] = Max('Dim_date'[Date])
+    MEASURE 'Measures_'[Total Sales] = var max_date = MAX('Dim_date'[Date])
+
+return 
+CALCULATE(
+    [_sales], 
+    Dim_date[Date] <= max_date, 
+    ALL(Dim_date[Date])
+)
+    MEASURE 'Measures_'[_sales] = SUMX(Sales, Sales[Price]*Sales[Order Qty])
+    MEASURE 'Measures_'[Slicer Selection min] = MinX('Dates disconnected', 'Dates disconnected'[Date])
+    MEASURE 'Measures_'[Slicer Selection max] = MaxX('Dates disconnected', 'Dates disconnected'[Date])
+    MEASURE 'Measures_'[Sales till From date] = CALCULATE([Total Sales], 
+                                filter ('Dim_Date',max('Dim_Date'[Date])<= [Slicer Selection min])
+                                )
+    MEASURE 'Measures_'[Sales RT on Date From  series] = if(max(Dim_Date[Date]) = [Slicer Selection min], 
+                                [Total Sales], 
+                                BLANK() )
+    MEASURE 'Measures_'[Sales RT on Date To series] = if(max(Dim_Date[Date]) = [Slicer Selection max], 
+                                [Total Sales], 
+                                BLANK() )
+    MEASURE 'Measures_'[Dates Between Growth BGLine] = VAR _max= CALCULATE( MAXX(Dim_Date,[Total Sales]), Dim_Date[Date])
+VAR _limitmultiplayer = 1.20
+VAR  _Maxlimit = _max*_limitmultiplayer
+
+RETURN
+If( max(Dim_Date[Date]) >= [Slicer Selection min] && max(Dim_Date[Date]) <= [Slicer Selection max], _Maxlimit, 
+        BLANK()
+        )
+    MEASURE 'Measures_'[Dates Between Highlight BG] = VAR _max= CALCULATE( MAXX(Dim_Date,[Total Sales]), Dim_Date[Date])
+VAR _limitmultiplayer = 1.70
+VAR  _Maxlimit = _max*_limitmultiplayer
+
+RETURN
+If( max(Dim_Date[Date]) >= [Slicer Selection min] && max(Dim_Date[Date]) <= [Slicer Selection max], _Maxlimit, 
+        BLANK()
+        )
+    MEASURE 'Measures_'[Sales RT on Date midpoint on Growthline] = VAR _Dateinterval = INT((DATEDIFF([Slicer Selection min],[Slicer Selection max],DAY))/2)
+VAR _Datemidpoint = DATE(YEAR([Slicer Selection min]),MONTH([Slicer Selection min]),day([Slicer Selection min])+_Dateinterval)
+VAR _max = CALCULATE( MAXX(Dim_Date,[Total Sales]), Dim_Date[Date])
+VAR _leadlinepoint= _max*1.15
+RETURN     If( max(Dim_Date[Date])= _Datemidpoint,_leadlinepoint,BLANK())
+    MEASURE 'Measures_'[Sales RT on Date midpoint on above Growthline] = VAR _Dateinterval = INT((DATEDIFF([Slicer Selection min],[Slicer Selection max],DAY))/2)
+VAR _Datemidpoint = DATE(YEAR([Slicer Selection min]),MONTH([Slicer Selection min]),day([Slicer Selection min])+_Dateinterval)
+VAR _max = CALCULATE( MAXX(Dim_Date,[Total Sales]), Dim_Date[Date])
+VAR _leadlinepoint= _max*1.35
+RETURN     If( max(Dim_Date[Date])= _Datemidpoint,_leadlinepoint,BLANK())
+    MEASURE 'Measures_'[Data Label Duration] = VAR _intervaldays= DATEDIFF([Slicer Selection min], [Slicer Selection max],DAY)
+VAR _labelstring = _intervaldays & " " & " Days"
+
+RETURN
+_labelstring
+    MEASURE 'Measures_'[Data Label Growth Title] = " Growth"
+    MEASURE 'Measures_'[Data Lable Growth %] = FORMAT(CALCULATE([Growth Sales between dates],all(Dim_Date)), "0.00%")
+    MEASURE 'Measures_'[Growth Sales between dates] = DIVIDE([Sales RT on Date to]- [Sales RT on Date from],[Sales RT on Date from],0)
+    MEASURE 'Measures_'[Sales RT on Date from] = CALCULATE( [Sales RT on Date From  series] , filter( Dim_Date, [Max Date] = [Slicer Selection min]))
+    MEASURE 'Measures_'[Sales RT on Date to] = CALCULATE( [Sales RT on Date To series] , filter( Dim_Date, [Max Date] = [Slicer Selection max]))
+    MEASURE 'Measures_'[Sales RT on Date From lead line] = VAR _maxRT= CALCULATE( MAXX(Dim_Date,[Total Sales]), Dim_Date[Date])
+VAR _leadlinepoint= _maxRT*1.20
+RETURN     If( max(Dim_Date[Date])= [Slicer Selection min],_leadlinepoint,BLANK())
+    MEASURE 'Measures_'[Sales RT on Date To lead line] = VAR _maxRT = CALCULATE( MAXX(Dim_Date,[Total Sales]), Dim_Date[Date])
+VAR _leadlinepoint= _maxRT*1.20
+RETURN     If( max(Dim_Date[Date])= [Slicer Selection max],_leadlinepoint,BLANK())
+    MEASURE 'Measures_'[Filter Options] = VAR start_date = [Slicer Selection min]
+VAR end_date = [Slicer Selection max]
+
+-- Product Category Labels
+VAR all_product_category = ALL(Sales[Product Category])
+VAR selected_product_category = ALLSELECTED(Sales[Product Category])
+VAR product_category = CONCATENATEX(selected_product_category, Sales[Product Category], ", ")
+VAR product_category_label = 
+    IF(
+        COUNTROWS(selected_product_category) < COUNTROWS(all_product_category),
+        "Product Category: " & product_category,
+        "Product Category: All"
+    )
+
+-- Product Sub Category Labels
+VAR all_product_sub_category = ALL(Sales[Product Sub Category])
+VAR selected_product_sub_category = ALLSELECTED(Sales[Product Sub Category])
+VAR product_sub_category = CONCATENATEX(selected_product_sub_category, Sales[Product Sub Category], ", ")
+VAR product_sub_category_label = 
+    IF(
+        COUNTROWS(selected_product_sub_category) < COUNTROWS(all_product_sub_category),
+        " | Product Sub Category: " & product_sub_category,
+        " | Product Sub Category: All"
+    )
+
+-- Product Name Labels
+VAR all_product_name = ALL(Sales[Product Name])
+VAR selected_product_name = ALLSELECTED(Sales[Product Name])
+VAR product_name = CONCATENATEX(selected_product_name, Sales[Product Name], ", ")
+VAR product_name_label = 
+    IF(
+        COUNTROWS(selected_product_name) < COUNTROWS(all_product_name),
+        " | Product Name: " & product_name,
+        " | Product Name: All"
+    )
+
+
+-- Channel Labels
+VAR all_channels = ALL(Sales[Channel])
+VAR selected_channels = ALLSELECTED(Sales[Channel])
+VAR channels = CONCATENATEX(selected_channels, Sales[Channel], ", ")
+VAR channel_label = 
+    IF(
+        COUNTROWS(selected_channels) < COUNTROWS(all_channels),
+        " | Channels: " & channels,
+        " | Channels: All"
+    )
+
+-- Promotion Name Labels
+VAR all_promotion_name = ALL(Sales[Promotion Name])
+VAR selected_promotion_name = ALLSELECTED(Sales[Promotion Name])
+VAR promotion_name = CONCATENATEX(selected_promotion_name, Sales[Promotion Name], ", ")
+VAR promotion_name_label = 
+    IF(
+        COUNTROWS(selected_promotion_name) < COUNTROWS(all_promotion_name),
+        " | Promotion Name: " & promotion_name,
+        " | Promotion Name: All"
+    )
+
+-- Region Labels
+VAR all_region = ALL(Sales[Region])
+VAR selected_region = ALLSELECTED(Sales[Region])
+VAR region = CONCATENATEX(selected_region, Sales[Region], ", ")
+VAR region_label = 
+    IF(
+        COUNTROWS(selected_region) < COUNTROWS(all_region),
+        " | Region: " & region,
+        " | Region: All"
+    )
+
+-- Country Labels
+VAR all_country = ALL(Sales[Country])
+VAR selected_country = ALLSELECTED(Sales[Country])
+VAR country = CONCATENATEX(selected_country, Sales[Country], ", ")
+VAR country_label = 
+    IF(
+        COUNTROWS(selected_country) < COUNTROWS(all_country),
+        " | Country: " & country,
+        " | Country: All"
+    )
+
+-- City Labels
+VAR all_city = ALL(Sales[City])
+VAR selected_city = ALLSELECTED(Sales[City])
+VAR city = CONCATENATEX(selected_city, Sales[City], ", ")
+VAR city_label = 
+    IF(
+        COUNTROWS(selected_city) < COUNTROWS(all_city),
+        " | City: " & city,
+        " | City: All"
+    )
+
+-- Final Label Concatenation
+VAR final_label = product_category_label & product_sub_category_label & product_name_label & channel_label & promotion_name_label & region_label & country_label & city_label
+
+RETURN 
+IF(LEN(final_label) > 0, final_label, "")
+
+EVALUATE
+    SUMMARIZECOLUMNS(
+        "Sales till To date", 'Measures_'[Sales till To date],
+        "Max Date", 'Measures_'[Max Date],
+        "Total Sales", 'Measures_'[Total Sales],
+        "_sales", 'Measures_'[_sales],
+        "Slicer Selection min", 'Measures_'[Slicer Selection min],
+        "Slicer Selection max", 'Measures_'[Slicer Selection max],
+        "Sales till From date", 'Measures_'[Sales till From date],
+        "Sales RT on Date From  series", 'Measures_'[Sales RT on Date From  series],
+        "Sales RT on Date To series", 'Measures_'[Sales RT on Date To series],
+        "Dates Between Growth BGLine", 'Measures_'[Dates Between Growth BGLine],
+        "Dates Between Highlight BG", 'Measures_'[Dates Between Highlight BG],
+        "Sales RT on Date midpoint on Growthline", 'Measures_'[Sales RT on Date midpoint on Growthline],
+        "Sales RT on Date midpoint on above Growthline", 'Measures_'[Sales RT on Date midpoint on above Growthline],
+        "Data Label Duration", 'Measures_'[Data Label Duration],
+        "Data Label Growth Title", 'Measures_'[Data Label Growth Title],
+        "Data Lable Growth %", 'Measures_'[Data Lable Growth %],
+        "Growth Sales between dates", 'Measures_'[Growth Sales between dates],
+        "Sales RT on Date from", 'Measures_'[Sales RT on Date from],
+        "Sales RT on Date to", 'Measures_'[Sales RT on Date to],
+        "Sales RT on Date From lead line", 'Measures_'[Sales RT on Date From lead line],
+        "Sales RT on Date To lead line", 'Measures_'[Sales RT on Date To lead line],
+        "Filter Options", 'Measures_'[Filter Options]
+    )

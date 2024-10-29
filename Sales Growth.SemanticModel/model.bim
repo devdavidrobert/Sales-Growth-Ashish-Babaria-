@@ -16,7 +16,7 @@
       },
       {
         "name": "PBI_ProTooling",
-        "value": "[\"DevMode\"]"
+        "value": "[\"DevMode\",\"DaxQueryView_Desktop\"]"
       }
     ],
     "culture": "en-US",
